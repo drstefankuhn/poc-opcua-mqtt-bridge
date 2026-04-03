@@ -1,0 +1,23 @@
+# Build
+/build/
+/out/
+/cmake-build-*/
+
+# CMake / Conan generated
+CMakeUserPresets.json
+build/
+compile_commands.json
+
+# Generated documentation
+docs/
+
+# Editor / OS
+.cursor/
+.vscode/
+.idea/
+.DS_Store
+
+# Python cache for simulator
+simulation/opcua/__pycache__/
+simulation/opcua/*.pyc
+simulation/opcua/.venv/

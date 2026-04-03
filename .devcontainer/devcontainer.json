@@ -1,0 +1,29 @@
+{
+  "name": "poc-opcua-mqtt-bridge",
+  "dockerComposeFile": "../compose.yaml",
+  "service": "devcontainer",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "shutdownAction": "stopCompose",
+  "remoteUser": "vscode",
+  "postCreateCommand": "conan profile detect --force",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "anysphere.cpptools",
+        "ms-vscode.cmake-tools",
+        "ms-python.python"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "cmake.sourceDirectory": "${workspaceFolder}/bridge",
+        "cmake.useCMakePresets": "always",
+        "cmake.generator": "Ninja",
+        "files.watcherExclude": {
+          "**/.git/objects/**": true,
+          "**/.git/subtree-cache/**": true,
+          "**/build/**": true
+        }
+      }
+    }
+  }
+}

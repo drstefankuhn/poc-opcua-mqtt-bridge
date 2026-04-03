@@ -1,0 +1,74 @@
+services:
+
+  # OPC UA → MQTT bridge (dev container: toolchain + workspace)
+  devcontainer:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - .:/workspaces/${COMPOSE_PROJECT_NAME}:cached
+      - conan-cache:/home/vscode/.conan2
+      - ccache-cache:/home/vscode/.cache/ccache
+    working_dir: /workspaces/${COMPOSE_PROJECT_NAME}
+    environment:
+      CCACHE_DIR: /home/vscode/.cache/ccache
+    command: sleep infinity
+    init: true
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp=unconfined
+    depends_on:
+      opcua:
+        condition: service_healthy
+      mqtt:
+        condition: service_healthy
+
+  # OPC UA (simulator)
+  opcua:
+    build:
+      context: ./simulation/opcua
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - ./simulation/opcua:/app
+    working_dir: /app
+    command: python -u server.py
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import os,socket; p=int(os.environ['OPCUA_PORT']); s=socket.create_connection(('localhost', p), 2); s.close()\"",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  # MQTT broker (simulator)
+  mqtt:
+    image: eclipse-mosquitto:2.1.2-alpine
+    env_file:
+      - .env
+    volumes:
+      - ./simulation/mqtt/mosquitto-entrypoint.sh:/mosquitto-entrypoint.sh:ro
+    entrypoint: ["/bin/sh", "/mosquitto-entrypoint.sh"]
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mosquitto_sub -h localhost -p $$MQTT_PORT -t '$$SYS/broker/uptime' -C 1 -W 1 || exit 1",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+volumes:
+  conan-cache:
+  ccache-cache:
